@@ -23,7 +23,7 @@ and queries with Mongo:
   3. [One index per query](https://github.com/MongoHQ/MongoHQ-Index-Tutorial/blob/master/One-Index-Per-Query.markdown)
   4. Be careful about single-key indexes with low selectivity
   5. [Sort column and Range Queries must be the last column](https://github.com/MongoHQ/MongoHQ-Index-Tutorial/blob/master/Sort-Column-and-Range-Queries-msut-be-the-Last-Column.markdown)
-  7. Only sort or range on one column
+  7. [Only Sort or Range on One Column](https://github.com/MongoHQ/MongoHQ-Index-Tutorial/blob/master/only-sort-or-range-on-column.markdown)
   8. $ne or $nin operators aren't efficient with indexes
   9. Make sure your indexes can fit in RAM
   10. Read - Write Ration
