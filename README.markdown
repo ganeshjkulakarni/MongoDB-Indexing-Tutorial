@@ -12,12 +12,12 @@ Please install MongoDB for your operating system prior to begining this tutorial
 
 All of the chapters assume you have completed the prior chapter, and have loaded data.
 
-[Loading Data](https://github.com/MongoHQ/MongoHQ-Index-Tutorial/blob/master/README.markdown)
+[Loading Data](https://github.com/MongoHQ/MongoHQ-Index-Tutorial/blob/master/01_Loading-Data.markdown)
 
 As stated in the beginning, we will follow the general rules for creating indexes
 and queries with Mongo:
 
-  1. Create indexes to match your queries
+  1. [Create indexes to match your queries](https://github.com/MongoHQ/MongoHQ-Index-Tutorial/blob/master/02_Create-Indexes-to-match-your-queries.markdown)
   2. One index per query
   3. Make sure your indexes can fit in RAM
   4. Be careful about single-key indexes with low selectivity
@@ -28,43 +28,9 @@ and queries with Mongo:
   9. Only sort or range on one column
   10. $ne or $nin operators aren't efficient with indexes
 
-# Create Indexes to Match Your Queries
 
-When people use my application, the application should be able to query games based on:
+# One index per query
 
-  1. Teams -- People may have a favorite team and want their schedule for the entire season.
-  2. Location -- People may want to visit their favorite stadium
-  3. Dates -- People may have certain times they are available to go to games, and want to query on that.
-  4. People may want to query any combination fo the above
-
-Let's run our queries and determine how some of them run:
-
-    > db.games.findOne({"home.display_code": "CHC"});                                      // Chicago Cubs Games
-    > db.games.findOne({"game_venue": "Wrigley Field"});                                   // Games at Wrigley Field
-    > db.games.findOne({"game_time": {$gt: new Date(2012,6,4), $lt: new Date(2012,6,5)}}); // July 4th Games
-
-    // Chicago Cub Game at Wrigley Field Before Nearest to July 4th Weekend
-    > db.games.find({"home.display_code": "CHC", "game_venue": "Wrigley Field", "game_time": {$lt: new Date(2012,6,5)}}).sort({game_time: -1}).limit(1);
-
-Before we create an index, let's explain one of them:
-
-    > db.games.find({"home.display_code": "CHC"}).explain();
-      {
-        "cursor" : "BasicCursor",   // Not Indexed
-        "nscanned" : 2444,          // Number of objects scanned
-        "nscannedObjects" : 2444,
-        "n" : 81,
-        "millis" : 5,               // Length of Time
-        "nYields" : 0,
-        "nChunkSkips" : 0,
-        "isMultiKey" : false,
-        "indexOnly" : false,
-        "indexBounds" : {
-
-        }
-      }
-
-Take a look at the code block above.  I've added comments next to the cursor, nscanned, and nscannedObjects fields.
 Let's create a query on home team, and redo our last query:
 
     // While background is not required it, it should always be used when application not in maintenance mode
