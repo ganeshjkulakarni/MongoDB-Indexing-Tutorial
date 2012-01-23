@@ -132,153 +132,153 @@ When people use my application, the application should be able to query games ba
 
 Let's run our queries and determine how some of them run:
 
-  > db.games.findOne({"home.display_code": "CHC"});                                      // Chicago Cubs Games
-  > db.games.findOne({"game_venue": "Wrigley Field"});                                   // Games at Wrigley Field
-  > db.games.findOne({"game_time": {$gt: new Date(2012,6,4), $lt: new Date(2012,6,5)}}); // July 4th Games
+    > db.games.findOne({"home.display_code": "CHC"});                                      // Chicago Cubs Games
+    > db.games.findOne({"game_venue": "Wrigley Field"});                                   // Games at Wrigley Field
+    > db.games.findOne({"game_time": {$gt: new Date(2012,6,4), $lt: new Date(2012,6,5)}}); // July 4th Games
 
-  // Chicago Cub Game at Wrigley Field Before Nearest to July 4th Weekend
-  > db.games.find({"home.display_code": "CHC", "game_venue": "Wrigley Field", "game_time": {$lt: new Date(2012,6,5)}}).sort({game_time: -1}).limit(1);
+    // Chicago Cub Game at Wrigley Field Before Nearest to July 4th Weekend
+    > db.games.find({"home.display_code": "CHC", "game_venue": "Wrigley Field", "game_time": {$lt: new Date(2012,6,5)}}).sort({game_time: -1}).limit(1);
 
 Before we create an index, let's explain one of them:
 
-  > db.games.find({"home.display_code": "CHC"}).explain();
-  {
-  	"cursor" : "BasicCursor",   // Not Indexed
-  	"nscanned" : 2444,          // Number Scanned
-  	"nscannedObjects" : 2444,
-  	"n" : 81,
-  	"millis" : 5,               // Length of Time
-  	"nYields" : 0,
-  	"nChunkSkips" : 0,
-  	"isMultiKey" : false,
-  	"indexOnly" : false,
-  	"indexBounds" : {
+    > db.games.find({"home.display_code": "CHC"}).explain();
+    {
+      "cursor" : "BasicCursor",   // Not Indexed
+      "nscanned" : 2444,          // Number Scanned
+      "nscannedObjects" : 2444,
+      "n" : 81,
+      "millis" : 5,               // Length of Time
+      "nYields" : 0,
+      "nChunkSkips" : 0,
+      "isMultiKey" : false,
+      "indexOnly" : false,
+      "indexBounds" : {
 
-  	}
-  }
+      }
+    }
 
 Let's create a query on home team, and redo our last query:
 
-  // While background is not required it, it should always be used when application not in maintenance mode
-  > db.games.ensureIndex({"home.display_code": 1}, {"background": 1})
+    // While background is not required it, it should always be used when application not in maintenance mode
+    > db.games.ensureIndex({"home.display_code": 1}, {"background": 1})
 
-  // List our Indexes
-  > db.system.indexes.find();
-  { "v" : 1, "key" : { "_id" : 1 }, "ns" : "mlb-games.games", "name" : "_id_" }
-  { "v" : 1, "key" : { "home.display_code" : 1 }, "ns" : "mlb-games.games", "name" : "home.display_code_1", "background" : 1 }
+    // List our Indexes
+    > db.system.indexes.find();
+    { "v" : 1, "key" : { "_id" : 1 }, "ns" : "mlb-games.games", "name" : "_id_" }
+    { "v" : 1, "key" : { "home.display_code" : 1 }, "ns" : "mlb-games.games", "name" : "home.display_code_1", "background" : 1 }
 
-  // Now, rerun our prior query
-  > db.games.find({"home.display_code": "CHC"}).explain();
-  {
-  	"cursor" : "BtreeCursor home.display_code_1",  // Indexed and which index you used
-  	"nscanned" : 81,                               // Number of objects matching
-  	"nscannedObjects" : 81,
-  	"n" : 81,
-  	"millis" : 2,                                  // Length of time reduced by 1/2, run again and you will see it runs much faster
-  	"nYields" : 0,
-  	"nChunkSkips" : 0,
-  	"isMultiKey" : false,
-  	"indexOnly" : false,
-  	"indexBounds" : {
-  		"home.display_code" : [
-  			[
-  				"CHC",
-  				"CHC"
-  			]
-  		]
-  	}
-  }
+    // Now, rerun our prior query
+    > db.games.find({"home.display_code": "CHC"}).explain();
+    {
+      "cursor" : "BtreeCursor home.display_code_1",  // Indexed and which index you used
+      "nscanned" : 81,                               // Number of objects matching
+      "nscannedObjects" : 81,
+      "n" : 81,
+      "millis" : 2,                                  // Length of time reduced by 1/2, run again and you will see it runs much faster
+      "nYields" : 0,
+      "nChunkSkips" : 0,
+      "isMultiKey" : false,
+      "indexOnly" : false,
+      "indexBounds" : {
+        "home.display_code" : [
+          [
+            "CHC",
+            "CHC"
+          ]
+        ]
+      }
+    }
 
 Wait!  But there are 162 games in the MLB season, and the above code only found 81 of them.  That means we are missing
 81 other games the Cubs play over the course of the season.  Since we queried the home team above, we are missing all
 Cubs' road games.
 
-  > db.games.find({"away.display_code": "CHC"}).explain();
-  {
-  	"cursor" : "BasicCursor",                      // Index is not used because we haven't created on yet
-  	"nscanned" : 2444,
-  	"nscannedObjects" : 2444,
-  	"n" : 81,
-  	"millis" : 5,
-  	"nYields" : 0,
-  	"nChunkSkips" : 0,
-  	"isMultiKey" : false,
-  	"indexOnly" : false,
-  	"indexBounds" : {
+    > db.games.find({"away.display_code": "CHC"}).explain();
+    {
+      "cursor" : "BasicCursor",                      // Index is not used because we haven't created on yet
+      "nscanned" : 2444,
+      "nscannedObjects" : 2444,
+      "n" : 81,
+      "millis" : 5,
+      "nYields" : 0,
+      "nChunkSkips" : 0,
+      "isMultiKey" : false,
+      "indexOnly" : false,
+      "indexBounds" : {
 
-  	}
-  }
-  > db.games.ensureIndex({"away.display_code": 1}, {"background": 1});
+      }
+    }
+    > db.games.ensureIndex({"away.display_code": 1}, {"background": 1});
 
-  // Now, we should be able to run a query and it use the index
-  > db.games.find({"away.display_code": "CHC"}).explain();
-  {
-  	"cursor" : "BtreeCursor away.display_code_1",
-  	"nscanned" : 81,
-  	"nscannedObjects" : 81,
-  	"n" : 81,
-  	"millis" : 0,
-  	"nYields" : 0,
-  	"nChunkSkips" : 0,
-  	"isMultiKey" : false,
-  	"indexOnly" : false,
-  	"indexBounds" : {
-  		"away.display_code" : [
-  			[
-  				"CHC",
-  				"CHC"
-  			]
-  		]
-  	}
-  }
+    // Now, we should be able to run a query and it use the index
+    > db.games.find({"away.display_code": "CHC"}).explain();
+    {
+      "cursor" : "BtreeCursor away.display_code_1",
+      "nscanned" : 81,
+      "nscannedObjects" : 81,
+      "n" : 81,
+      "millis" : 0,
+      "nYields" : 0,
+      "nChunkSkips" : 0,
+      "isMultiKey" : false,
+      "indexOnly" : false,
+      "indexBounds" : {
+        "away.display_code" : [
+          [
+            "CHC",
+            "CHC"
+          ]
+        ]
+      }
+    }
 
-  > db.games.find({$or: [{"away.display_code": "CHC"}, {"home.display_code": "CHC"}]})
-  {
-  	"clauses" : [
-  		{
-  			"cursor" : "BtreeCursor away.display_code_1",
-  			"nscanned" : 81,
-  			"nscannedObjects" : 81,
-  			"n" : 81,
-  			"millis" : 0,
-  			"nYields" : 0,
-  			"nChunkSkips" : 0,
-  			"isMultiKey" : false,
-  			"indexOnly" : false,
-  			"indexBounds" : {
-  				"away.display_code" : [
-  					[
-  						"CHC",
-  						"CHC"
-  					]
-  				]
-  			}
-  		},
-  		{
-  			"cursor" : "BtreeCursor home.display_code_1",
-  			"nscanned" : 81,
-  			"nscannedObjects" : 81,
-  			"n" : 81,
-  			"millis" : 1,
-  			"nYields" : 0,
-  			"nChunkSkips" : 0,
-  			"isMultiKey" : false,
-  			"indexOnly" : false,
-  			"indexBounds" : {
-  				"home.display_code" : [
-  					[
-  						"CHC",
-  						"CHC"
-  					]
-  				]
-  			}
-  		}
-  	],
-  	"nscanned" : 162,
-  	"nscannedObjects" : 162,
-  	"n" : 162,
-  	"millis" : 1
-  }
+    > db.games.find({$or: [{"away.display_code": "CHC"}, {"home.display_code": "CHC"}]})
+    {
+      "clauses" : [
+        {
+          "cursor" : "BtreeCursor away.display_code_1",
+          "nscanned" : 81,
+          "nscannedObjects" : 81,
+          "n" : 81,
+          "millis" : 0,
+          "nYields" : 0,
+          "nChunkSkips" : 0,
+          "isMultiKey" : false,
+          "indexOnly" : false,
+          "indexBounds" : {
+            "away.display_code" : [
+              [
+                "CHC",
+                "CHC"
+              ]
+            ]
+          }
+        },
+        {
+          "cursor" : "BtreeCursor home.display_code_1",
+          "nscanned" : 81,
+          "nscannedObjects" : 81,
+          "n" : 81,
+          "millis" : 1,
+          "nYields" : 0,
+          "nChunkSkips" : 0,
+          "isMultiKey" : false,
+          "indexOnly" : false,
+          "indexBounds" : {
+            "home.display_code" : [
+              [
+                "CHC",
+                "CHC"
+              ]
+            ]
+          }
+        }
+      ],
+      "nscanned" : 162,
+      "nscannedObjects" : 162,
+      "n" : 162,
+      "millis" : 1
+    }
 
 You will see above that Mongo used two indexes for the query.  Since they were top level conditions, it concatenated the
 results of two queries to get the response.
