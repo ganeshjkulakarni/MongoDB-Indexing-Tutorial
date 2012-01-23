@@ -537,7 +537,7 @@ What if we wanted to find when the Cubs visit AT&T Park and Nationals Park?
         }
       }
 
-Again! Awesome.  Now, want if we wanted to query on all games that happen on July 4th?
+Again! Awesome.  Now, what if we wanted to query on all games that happen on July 4th?
 
     // First, let's go ahead and create an index
     > db.games.ensureIndex({"game_time": 1});
